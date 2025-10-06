@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Students - Study Time Predictor{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> Students</h2>
+    <p class="text-muted">{{ students|length }} students registered</p>
+</div>
+
+<div class="row">
+    {% for student in students %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-person-circle"></i> {{ student.name }}
+                </h5>
+                
+                <div class="mb-3">
+                    <small class="text-muted">{{ student.email }}</small>
+                </div>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <strong>{{ student.age }}</strong><br>
+                        <small class="text-muted">Age</small>
+                    </div>
+                    <div class="col-6">
+                        <strong>{{ "%.0f"|format(student.avg_focus_duration) }}m</strong><br>
+                        <small class="text-muted">Focus Time</small>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <span class="badge bg-primary">{{ student.education_level|title }}</span>
+                    <span class="badge bg-info">{{ student.learning_style|title }}</span>
+                </div>
+                
+                <a href="{{ url_for('main.student_detail', student_id=student.id) }}" 
+                   class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-eye"></i> View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not students %}
+<div class="text-center py-5">
+    <i class="bi bi-people display-1 text-muted"></i>
+    <h3 class="text-muted mt-3">No Students Found</h3>
+    <p class="text-muted">Add some students to get started with predictions.</p>
+</div>
+{% endif %}
+{% endblock %}

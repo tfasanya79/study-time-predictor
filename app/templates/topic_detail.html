@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topic.name }} - Study Time Predictor{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="bi bi-journal-text"></i> {{ topic.name }}</h2>
+        <p class="text-muted">{{ topic.subject }} - Difficulty Level {{ topic.difficulty_level }}/10</p>
+    </div>
+    <a href="{{ url_for('main.topics') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Topics
+    </a>
+</div>
+
+<!-- Topic Information Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4>{{ topic.difficulty_level }}/10</h4>
+                <p class="text-muted mb-0">Difficulty</p>
+                <div class="progress mt-2" style="height: 8px;">
+                    {% set difficulty_percent = (topic.difficulty_level * 10) %}
+                    {% if topic.difficulty_level <= 3 %}
+                        {% set difficulty_color = "success" %}
+                    {% elif topic.difficulty_level <= 6 %}
+                        {% set difficulty_color = "warning" %}
+                    {% else %}
+                        {% set difficulty_color = "danger" %}
+                    {% endif %}
+                    <div class="progress-bar bg-{{ difficulty_color }}" 
+                         style="width: {{ difficulty_percent }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4>{{ "%.1f"|format(topic.estimated_base_time) }}h</h4>
+                <p class="text-muted mb-0">Estimated Time</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4>{{ stats.total_sessions }}</h4>
+                <p class="text-muted mb-0">Total Sessions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4>{{ "%.1f"|format(stats.avg_time) }}h</h4>
+                <p class="text-muted mb-0">Actual Avg Time</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Topic Details -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Topic Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Subject:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-primary">{{ topic.subject }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Content Type:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-info">{{ topic.content_type|title }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Prerequisites:</dt>
+                    <dd class="col-sm-8">
+                        {% if topic.prerequisites_count > 0 %}
+                            <span class="badge bg-warning">{{ topic.prerequisites_count }} required</span>
+                        {% else %}
+                            <span class="badge bg-success">None</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Performance Statistics</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-6">Avg Comprehension:</dt>
+                    <dd class="col-sm-6">
+                        <strong class="text-success">{{ "%.1f"|format(stats.avg_comprehension) }}%</strong>
+                    </dd>
+                    
+                    <dt class="col-sm-6">Completion Rate:</dt>
+                    <dd class="col-sm-6">
+                        <strong class="text-info">{{ "%.1f"|format(stats.completion_rate) }}%</strong>
+                    </dd>
+                </dl>
+                
+                <!-- Performance Indicators -->
+                <div class="mb-2">
+                    <small class="text-muted">Overall Performance:</small>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" 
+                             style="width: {{ stats.avg_comprehension }}%"
+                             role="progressbar">
+                            {{ "%.0f"|format(stats.avg_comprehension) }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-2">
+                    <small class="text-muted">Completion Rate:</small>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-info" 
+                             style="width: {{ stats.completion_rate }}%"
+                             role="progressbar">
+                            {{ "%.0f"|format(stats.completion_rate) }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Time Comparison -->
+                {% if stats.avg_time > 0 and topic.estimated_base_time > 0 %}
+                <div class="mt-3">
+                    <small class="text-muted">Time vs Estimate:</small>
+                    {% set time_ratio = (stats.avg_time / topic.estimated_base_time) %}
+                    {% if time_ratio > 1.2 %}
+                        <span class="badge bg-warning">{{ "%.0f"|format((time_ratio - 1) * 100) }}% longer than expected</span>
+                    {% elif time_ratio < 0.8 %}
+                        <span class="badge bg-success">{{ "%.0f"|format((1 - time_ratio) * 100) }}% faster than expected</span>
+                    {% else %}
+                        <span class="badge bg-info">On target</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Study Sessions for this Topic -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-people"></i> Student Sessions
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if sessions %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Planned</th>
+                        <th>Actual</th>
+                        <th>Efficiency</th>
+                        <th>Comprehension</th>
+                        <th>Completion</th>
+                        <th>Method</th>
+                        <th>Rating</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session_data in sessions %}
+                    {% set session = session_data.StudySession %}
+                    {% set student = session_data.Student %}
+                    <tr>
+                        <td>
+                            <small>{{ session.session_date.strftime('%Y-%m-%d') if session.session_date else 'N/A' }}</small><br>
+                            <small class="text-muted">{{ session.time_of_day|title }}</small>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('main.student_detail', student_id=student.id) }}" 
+                               class="text-decoration-none">
+                                {{ student.name }}
+                            </a><br>
+                            <small class="text-muted">{{ student.learning_style|title }}</small>
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ "%.1f"|format(session.planned_duration) }}h</span>
+                        </td>
+                        <td>
+                            <strong>{{ "%.1f"|format(session.actual_duration) }}h</strong>
+                        </td>
+                        <td>
+                            {% set efficiency = (session.planned_duration / session.actual_duration * 100) if session.actual_duration > 0 else 0 %}
+                            {% if efficiency >= 90 %}
+                                <span class="badge bg-success">{{ "%.0f"|format(efficiency) }}%</span>
+                            {% elif efficiency >= 70 %}
+                                <span class="badge bg-warning">{{ "%.0f"|format(efficiency) }}%</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ "%.0f"|format(efficiency) }}%</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 16px; width: 60px;">
+                                {% if session.comprehension_score >= 80 %}
+                                    {% set progress_color = "success" %}
+                                {% elif session.comprehension_score >= 60 %}
+                                    {% set progress_color = "warning" %}
+                                {% else %}
+                                    {% set progress_color = "danger" %}
+                                {% endif %}
+                                <div class="progress-bar bg-{{ progress_color }}" 
+                                     style="width: {{ session.comprehension_score }}%"
+                                     role="progressbar"
+                                     title="{{ '%.0f'|format(session.comprehension_score) }}%">
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ "%.0f"|format(session.completion_percentage) }}%</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ session.study_method|title }}</small><br>
+                            <small class="text-muted">{{ session.environment|title }}</small>
+                        </td>
+                        <td>
+                            {% for i in range(session.satisfaction_rating) %}
+                                <i class="bi bi-star-fill text-warning"></i>
+                            {% endfor %}
+                            {% for i in range(5 - session.satisfaction_rating) %}
+                                <i class="bi bi-star text-muted"></i>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="bi bi-people display-4 text-muted"></i>
+            <h5 class="text-muted mt-3">No Study Sessions</h5>
+            <p class="text-muted">No students have studied this topic yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Action -->
+<div class="mt-4">
+    <a href="{{ url_for('main.predict_form') }}?topic_id={{ topic.id }}" 
+       class="btn btn-primary">
+        <i class="bi bi-calculator"></i> Predict Study Time for {{ topic.name }}
+    </a>
+</div>
+{% endblock %}

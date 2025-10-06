@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Topics - Study Time Predictor{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-journal-text"></i> Study Topics</h2>
+    <p class="text-muted">{{ topics|length }} topics available</p>
+</div>
+
+<!-- Subject Filter -->
+<div class="mb-4">
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary active" onclick="filterBySubject('all')">
+            All Subjects
+        </button>
+        {% set subjects = topics|map(attribute='subject')|unique|list %}
+        {% for subject in subjects %}
+        <button type="button" class="btn btn-outline-primary" onclick="filterBySubject('{{ subject }}')">
+            {{ subject }}
+        </button>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="row" id="topicsContainer">
+    {% for topic in topics %}
+    <div class="col-lg-4 col-md-6 mb-4 topic-card" data-subject="{{ topic.subject }}">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <span class="badge bg-secondary">{{ topic.subject }}</span>
+                </h6>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ topic.name }}</h5>
+                
+                <div class="mb-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <strong>{{ topic.difficulty_level }}/10</strong><br>
+                            <small class="text-muted">Difficulty</small>
+                        </div>
+                        <div class="col-4">
+                            <strong>{{ "%.1f"|format(topic.estimated_base_time) }}h</strong><br>
+                            <small class="text-muted">Base Time</small>
+                        </div>
+                        <div class="col-4">
+                            <strong>{{ topic.prerequisites_count }}</strong><br>
+                            <small class="text-muted">Prerequisites</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <!-- Difficulty Progress Bar -->
+                    <div class="mb-2">
+                        <small class="text-muted">Difficulty Level:</small>
+                        <div class="progress" style="height: 8px;">
+                            {% set difficulty_percent = (topic.difficulty_level * 10) %}
+                            {% if topic.difficulty_level <= 3 %}
+                                {% set difficulty_color = "success" %}
+                            {% elif topic.difficulty_level <= 6 %}
+                                {% set difficulty_color = "warning" %}
+                            {% else %}
+                                {% set difficulty_color = "danger" %}
+                            {% endif %}
+                            <div class="progress-bar bg-{{ difficulty_color }}" 
+                                 style="width: {{ difficulty_percent }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <span class="badge bg-info">{{ topic.content_type|title }}</span>
+                </div>
+                
+                <a href="{{ url_for('main.topic_detail', topic_id=topic.id) }}" 
+                   class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-eye"></i> View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not topics %}
+<div class="text-center py-5">
+    <i class="bi bi-journal-text display-1 text-muted"></i>
+    <h3 class="text-muted mt-3">No Topics Found</h3>
+    <p class="text-muted">Add some topics to get started with predictions.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterBySubject(subject) {
+    const cards = document.querySelectorAll('.topic-card');
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    
+    // Update button states
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Filter cards
+    cards.forEach(card => {
+        if (subject === 'all' || card.dataset.subject === subject) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="bg-gradient-primary text-white p-5 rounded">
+            <h1 class="display-4 mb-3">Study Time Predictor</h1>
+            <p class="lead mb-4">AI-powered predictions to help students optimize their learning time and improve outcomes.</p>
+            <a href="{{ url_for('main.predict_form') }}" class="btn btn-light btn-lg">
+                <i class="bi bi-calculator"></i> Make a Prediction
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Students</h5>
+                        <h2>{{ stats.students }}</h2>
+                    </div>
+                    <i class="bi bi-people fs-1"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Topics</h5>
+                        <h2>{{ stats.topics }}</h2>
+                    </div>
+                    <i class="bi bi-journal-text fs-1"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Study Sessions</h5>
+                        <h2>{{ stats.sessions }}</h2>
+                    </div>
+                    <i class="bi bi-clock fs-1"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Avg. Duration</h5>
+                        <h2>{{ stats.avg_duration }}h</h2>
+                    </div>
+                    <i class="bi bi-stopwatch fs-1"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Overview -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up"></i> Performance Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-primary">{{ stats.avg_comprehension }}%</h4>
+                        <p class="text-muted">Average Comprehension</p>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ stats.avg_duration }}h</h4>
+                        <p class="text-muted">Average Session Time</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <p class="text-muted">
+                        Based on {{ stats.sessions }} study sessions across {{ stats.students }} students 
+                        studying {{ stats.topics }} different topics.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-tools"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.predict_form') }}" class="btn btn-primary">
+                        <i class="bi bi-calculator"></i> Predict Study Time
+                    </a>
+                    <a href="{{ url_for('main.analytics') }}" class="btn btn-outline-info">
+                        <i class="bi bi-graph-up"></i> View Analytics
+                    </a>
+                    <a href="{{ url_for('main.train_model') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-gear"></i> Retrain Model
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+{% if recent_sessions %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-activity"></i> Recent Study Sessions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Topic</th>
+                                <th>Duration</th>
+                                <th>Comprehension</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in recent_sessions %}
+                            <tr>
+                                <td>{{ session.session_date.strftime('%Y-%m-%d %H:%M') if session.session_date else 'N/A' }}</td>
+                                <td>
+                                    <a href="{{ url_for('main.student_detail', student_id=session.student.id) }}" 
+                                       class="text-decoration-none">
+                                        {{ session.student.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('main.topic_detail', topic_id=session.topic.id) }}" 
+                                       class="text-decoration-none">
+                                        {{ session.topic.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ "%.1f"|format(session.actual_duration) }}h</span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" 
+                                             style="width: {{ session.comprehension_score }}%"
+                                             role="progressbar">
+                                            {{ "%.0f"|format(session.comprehension_score) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% for i in range(session.satisfaction_rating) %}
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    {% endfor %}
+                                    {% for i in range(5 - session.satisfaction_rating) %}
+                                        <i class="bi bi-star text-muted"></i>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

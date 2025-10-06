@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Study Time Predictor{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-graph-up"></i> Analytics Dashboard</h2>
+</div>
+
+<!-- Performance by Subject -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Performance by Subject</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="subjectChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Subject Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Sessions</th>
+                                <th>Avg Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in subject_stats %}
+                            <tr>
+                                <td>{{ stat.subject }}</td>
+                                <td>{{ stat.session_count }}</td>
+                                <td>{{ "%.1f"|format(stat.avg_duration) }}h</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Learning Style Analysis -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Learning Style Performance</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="learningStyleChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Time of Day Analysis</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="timeOfDayChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Statistics -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Detailed Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Learning Styles</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Style</th>
+                                        <th>Avg Duration</th>
+                                        <th>Comprehension</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in learning_style_stats %}
+                                    <tr>
+                                        <td>{{ stat.learning_style|title }}</td>
+                                        <td>{{ "%.1f"|format(stat.avg_duration) }}h</td>
+                                        <td>{{ "%.1f"|format(stat.avg_comprehension) }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6>Time of Day</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Sessions</th>
+                                        <th>Comprehension</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in time_stats %}
+                                    <tr>
+                                        <td>{{ stat.time_of_day|title }}</td>
+                                        <td>{{ stat.session_count }}</td>
+                                        <td>{{ "%.1f"|format(stat.avg_comprehension) }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6>Key Insights</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success"></i> Best performing subject: 
+                                {{ subject_stats|sort(attribute='avg_comprehension', reverse=true)|first|attr('subject') if subject_stats }}
+                            </li>
+                            <li><i class="bi bi-clock text-info"></i> Most active time: 
+                                {{ time_stats|sort(attribute='session_count', reverse=true)|first|attr('time_of_day')|title if time_stats }}
+                            </li>
+                            <li><i class="bi bi-person text-warning"></i> Top learning style: 
+                                {{ learning_style_stats|sort(attribute='avg_comprehension', reverse=true)|first|attr('learning_style')|title if learning_style_stats }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Subject Performance Chart
+const subjectData = {
+    labels: [{% for stat in subject_stats %}'{{ stat.subject }}'{{ ',' if not loop.last }}{% endfor %}],
+    datasets: [{
+        label: 'Average Duration (hours)',
+        data: [{% for stat in subject_stats %}{{ "%.2f"|format(stat.avg_duration) }}{{ ',' if not loop.last }}{% endfor %}],
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+        yAxisID: 'y'
+    }, {
+        label: 'Average Comprehension (%)',
+        data: [{% for stat in subject_stats %}{{ "%.1f"|format(stat.avg_comprehension) }}{{ ',' if not loop.last }}{% endfor %}],
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1,
+        yAxisID: 'y1'
+    }]
+};
+
+new Chart(document.getElementById('subjectChart'), {
+    type: 'bar',
+    data: subjectData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Duration (hours)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Comprehension (%)'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                }
+            }
+        }
+    }
+});
+
+// Learning Style Chart
+const learningStyleData = {
+    labels: [{% for stat in learning_style_stats %}'{{ stat.learning_style|title }}'{{ ',' if not loop.last }}{% endfor %}],
+    datasets: [{
+        data: [{% for stat in learning_style_stats %}{{ "%.1f"|format(stat.avg_comprehension) }}{{ ',' if not loop.last }}{% endfor %}],
+        backgroundColor: [
+            'rgba(255, 99, 132, 0.8)',
+            'rgba(54, 162, 235, 0.8)',
+            'rgba(255, 205, 86, 0.8)',
+            'rgba(75, 192, 192, 0.8)'
+        ]
+    }]
+};
+
+new Chart(document.getElementById('learningStyleChart'), {
+    type: 'doughnut',
+    data: learningStyleData,
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            title: {
+                display: true,
+                text: 'Comprehension by Learning Style'
+            }
+        }
+    }
+});
+
+// Time of Day Chart
+const timeOfDayData = {
+    labels: [{% for stat in time_stats %}'{{ stat.time_of_day|title }}'{{ ',' if not loop.last }}{% endfor %}],
+    datasets: [{
+        label: 'Average Comprehension',
+        data: [{% for stat in time_stats %}{{ "%.1f"|format(stat.avg_comprehension) }}{{ ',' if not loop.last }}{% endfor %}],
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 2,
+        fill: true
+    }]
+};
+
+new Chart(document.getElementById('timeOfDayChart'), {
+    type: 'radar',
+    data: timeOfDayData,
+    options: {
+        responsive: true,
+        scales: {
+            r: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                    display: true,
+                    text: 'Comprehension Score'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

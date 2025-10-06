@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Predict Study Time - Study Time Predictor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-calculator"></i> Study Time Prediction
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Get AI-powered predictions for how long it will take to study a specific topic 
+                    based on student characteristics and session context.
+                </p>
+                
+                <form id="predictionForm">
+                    <!-- Student Selection -->
+                    <div class="mb-4">
+                        <label for="student_id" class="form-label">
+                            <i class="bi bi-person"></i> Select Student
+                        </label>
+                        <select class="form-select" id="student_id" name="student_id" required>
+                            <option value="">Choose a student...</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}" 
+                                    data-age="{{ student.age }}"
+                                    data-education="{{ student.education_level }}"
+                                    data-style="{{ student.learning_style }}">
+                                {{ student.name }} ({{ student.education_level|title }}, {{ student.learning_style|title }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Topic Selection -->
+                    <div class="mb-4">
+                        <label for="topic_id" class="form-label">
+                            <i class="bi bi-journal-text"></i> Select Topic
+                        </label>
+                        <select class="form-select" id="topic_id" name="topic_id" required>
+                            <option value="">Choose a topic...</option>
+                            {% for topic in topics %}
+                            <option value="{{ topic.id }}"
+                                    data-subject="{{ topic.subject }}"
+                                    data-difficulty="{{ topic.difficulty_level }}"
+                                    data-base-time="{{ topic.estimated_base_time }}">
+                                {{ topic.name }} ({{ topic.subject }}, Difficulty: {{ topic.difficulty_level }}/10)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Session Context -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="time_of_day" class="form-label">
+                                    <i class="bi bi-clock"></i> Time of Day
+                                </label>
+                                <select class="form-select" id="time_of_day" name="time_of_day" required>
+                                    <option value="morning">Morning (6 AM - 12 PM)</option>
+                                    <option value="afternoon" selected>Afternoon (12 PM - 6 PM)</option>
+                                    <option value="evening">Evening (6 PM - 10 PM)</option>
+                                    <option value="night">Night (10 PM - 6 AM)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="study_method" class="form-label">
+                                    <i class="bi bi-book"></i> Study Method
+                                </label>
+                                <select class="form-select" id="study_method" name="study_method" required>
+                                    <option value="reading" selected>Reading</option>
+                                    <option value="practice">Practice Problems</option>
+                                    <option value="video">Video Learning</option>
+                                    <option value="discussion">Discussion/Group</option>
+                                    <option value="flashcards">Flashcards</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="environment" class="form-label">
+                                    <i class="bi bi-geo-alt"></i> Study Environment
+                                </label>
+                                <select class="form-select" id="environment" name="environment" required>
+                                    <option value="home" selected>Home</option>
+                                    <option value="library">Library</option>
+                                    <option value="cafe">Cafe</option>
+                                    <option value="classroom">Classroom</option>
+                                    <option value="outdoor">Outdoor</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="breaks_taken" class="form-label">
+                                    <i class="bi bi-pause"></i> Expected Breaks
+                                </label>
+                                <select class="form-select" id="breaks_taken" name="breaks_taken" required>
+                                    <option value="0">No breaks</option>
+                                    <option value="1" selected>1-2 breaks</option>
+                                    <option value="2">3-4 breaks</option>
+                                    <option value="3">5+ breaks</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Energy and Distraction Levels -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="energy_level" class="form-label">
+                                    <i class="bi bi-lightning"></i> Energy Level: <span id="energy_value">3</span>
+                                </label>
+                                <input type="range" class="form-range" id="energy_level" 
+                                       name="energy_level" min="1" max="5" value="3"
+                                       oninput="document.getElementById('energy_value').textContent = this.value">
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>Low</span>
+                                    <span>High</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="distraction_level" class="form-label">
+                                    <i class="bi bi-phone"></i> Expected Distractions: <span id="distraction_value">3</span>
+                                </label>
+                                <input type="range" class="form-range" id="distraction_level" 
+                                       name="distraction_level" min="1" max="5" value="3"
+                                       oninput="document.getElementById('distraction_value').textContent = this.value">
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>Few</span>
+                                    <span>Many</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="predictBtn">
+                            <i class="bi bi-calculator"></i> Predict Study Time
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Prediction Result -->
+        <div class="card mt-4" id="resultCard" style="display: none;">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-check-circle"></i> Prediction Result
+                </h5>
+            </div>
+            <div class="card-body" id="resultBody">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div class="text-center mt-4" id="loadingSpinner" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Analyzing data and making prediction...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // Show loading state
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('predictBtn').disabled = true;
+    
+    try {
+        const response = await fetch('/api/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showResult(result);
+        } else {
+            showError(result.error || 'An error occurred');
+        }
+    } catch (error) {
+        showError('Network error: ' + error.message);
+    } finally {
+        // Hide loading state
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('predictBtn').disabled = false;
+    }
+});
+
+function showResult(result) {
+    const resultBody = document.getElementById('resultBody');
+    const confidenceClass = result.confidence === 'High' ? 'success' : 'warning';
+    
+    resultBody.innerHTML = `
+        <div class="row text-center mb-4">
+            <div class="col-12">
+                <h2 class="text-primary">${result.display_time}</h2>
+                <p class="text-muted">Predicted study time</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="bi bi-person"></i> Student</h6>
+                <p>${result.student_name}</p>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="bi bi-journal-text"></i> Topic</h6>
+                <p>${result.topic_name}</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <h6><i class="bi bi-speedometer2"></i> Confidence Level</h6>
+                <span class="badge bg-${confidenceClass}">${result.confidence}</span>
+                <p class="text-muted small mt-2">
+                    This prediction is based on historical data and machine learning analysis.
+                    Actual time may vary depending on individual circumstances.
+                </p>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function showError(message) {
+    const resultBody = document.getElementById('resultBody');
+    resultBody.innerHTML = `
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> ${message}
+        </div>
+    `;
+    
+    // Change card header to error state
+    const cardHeader = document.getElementById('resultCard').querySelector('.card-header');
+    cardHeader.className = 'card-header bg-danger text-white';
+    cardHeader.innerHTML = '<h5 class="card-title mb-0"><i class="bi bi-x-circle"></i> Prediction Error</h5>';
+    
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}
