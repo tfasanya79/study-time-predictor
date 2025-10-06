@@ -4,7 +4,7 @@ Final project for the Building AI course
 
 ## Summary
 
-An AI-powered web application that predicts how long students will take to master specific topics based on their learning characteristics, study context, and historical performance data. Uses TensorFlow neural networks to provide personalized study time estimates with confidence ratings through an interactive web interface.
+An AI-powered web application that predicts how long students will take to master specific topics based on their learning characteristics, study context, and historical performance data. Uses TensorFlow neural networks to provide personalized study time estimates with confidence ratings through an interactive web interface. Building AI course project.
 
 ## Background
 
